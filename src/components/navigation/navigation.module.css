@@ -1,0 +1,14 @@
+.root {
+  margin: 0 auto;
+  padding: 2rem;
+}
+
+.list {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  list-style: none;
+}
+.listItem {
+  color: var(--light-pink);
+}

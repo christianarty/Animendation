@@ -6,3 +6,11 @@
     rgba(252, 92, 125, 0.62) 100%
   );
 }
+
+.grid {
+  display: grid;
+  min-width: 1000px;
+  margin: 0 auto;
+  grid-template-columns: 1fr;
+  justify-items: center;
+}
