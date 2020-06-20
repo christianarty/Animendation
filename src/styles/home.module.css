@@ -9,8 +9,17 @@
 
 .grid {
   display: grid;
-  min-width: 1000px;
+  /* min-width: 1000px; */
   margin: 0 auto;
   grid-template-columns: 1fr;
   justify-items: center;
+  row-gap: 60px;
+  align-items: center;
+}
+
+.grid_checkbox {
+  display: grid;
+  row-gap: 10px;
+  column-gap: 30px;
+  grid-template-columns: repeat(3, 1fr);
 }

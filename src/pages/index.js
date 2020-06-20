@@ -1,52 +1,40 @@
-import styles from '../styles/home.module.css'
-import { Navigation } from 'components/navigation'
+import { useQuery } from '@apollo/react-hooks'
+import { GET_GENRES, GET_RANDOM_ANIME } from 'api/queries'
+import { Button } from 'components/button'
 import { Card } from 'components/card'
 import { CardGroup } from 'components/card-group'
-import { gql } from 'apollo-boost'
-import { useQuery } from '@apollo/react-hooks'
-import React, { useEffect } from 'react'
+import { Checkbox } from 'components/checkbox'
+import { Navigation } from 'components/navigation'
+import React, { useEffect, useState } from 'react'
 import shuffle from 'utils/shuffle'
-const GET_RANDOM_ANIME = gql`
-  query GET_RANDOM_ANIME($page: Int!) {
-    Page(perPage: 50, page: $page) {
-      media(type: ANIME, isAdult: false) {
-        title {
-          romaji
-          english
-          native
-          userPreferred
-        }
-        idMal
-        id
-        coverImage {
-          extraLarge
-          large
-          medium
-          color
-        }
-      }
-      pageInfo {
-        total
-        perPage
-        currentPage
-        lastPage
-        hasNextPage
-      }
-    }
-  }
-`
+import styles from '../styles/home.module.css'
 
 const randomize = (endingNumber) => Math.floor(Math.random() * endingNumber) + 1
 
 let lastPage = 260
 const page = randomize(lastPage)
-const randomAnimeNumber = shuffle()[0]
+const randomAnimeNumbers = shuffle().slice(0, 3)
+
 function Home() {
+  const [selectedGenres, setSelectedGenres] = useState([])
+
+  const onChange = (e) => {
+    e.preventDefault()
+    setSelectedGenres([...selectedGenres, e.target.value])
+  }
+
   const { data, loading } = useQuery(GET_RANDOM_ANIME, {
     variables: { page },
     ssr: true,
-    fetchPolicy: 'network-only',
+    fetchPolicy:
+      process.env.NODE_ENV === 'production' ? 'network-only' : 'cache-and-network',
   })
+  const { data: genreData } = useQuery(GET_GENRES, {
+    ssr: true,
+    fetchPolicy:
+      process.env.NODE_ENV === 'production' ? 'network-only' : 'cache-and-network',
+  })
+
   useEffect(() => {
     window.localStorage.setItem('last_page', data?.Page?.pageInfo?.lastPage)
     if (!window.localStorage.getItem('last_page') === lastPage) {
@@ -54,6 +42,7 @@ function Home() {
     }
   }, [data])
   const animeList = data?.Page.media
+  const genres = genreData?.GenreCollection
   return (
     <div className={styles.container}>
       {loading ? (
@@ -65,15 +54,24 @@ function Home() {
           <div className={styles.grid}>
             <CardGroup>
               <Card
-                image={animeList[randomAnimeNumber].coverImage.large}
+                image={animeList[randomAnimeNumbers[0]].coverImage.large}
                 side="left"
               />
-              <Card image={animeList[randomAnimeNumber].coverImage.large} main />
+              <Card image={animeList[randomAnimeNumbers[1]].coverImage.large} main />
               <Card
-                image={animeList[randomAnimeNumber].coverImage.large}
+                image={animeList[randomAnimeNumbers[2]].coverImage.large}
                 side="right"
               />
             </CardGroup>
+            <Button size="large">Randomize</Button>
+
+            {genres && (
+              <div className={styles.grid_checkbox}>
+                {genres.map((genre, idx) => (
+                  <Checkbox key={idx} onChange={onChange} genre={genre} />
+                ))}
+              </div>
+            )}
           </div>
         </>
       )}
