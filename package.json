@@ -6,7 +6,9 @@
     "dev": "next dev",
     "dev:debug": "NODE_OPTIONS='--inspect' next dev",
     "build": "next build",
-    "start": "next start"
+    "start": "next start",
+    "lint": "eslint . --ignore-path=.gitignore",
+    "lint:fix": "yarn run lint --fix"
   },
   "dependencies": {
     "@apollo/react-hooks": "^3.1.5",

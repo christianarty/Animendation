@@ -1,5 +1,5 @@
-import React from "react";
-import styles from "./navigation.module.css";
+import React from 'react'
+import styles from './navigation.module.css'
 export const Navigation = () => {
   return (
     <nav className={styles.root}>
@@ -8,5 +8,5 @@ export const Navigation = () => {
         <li className={styles.listItem}>About</li>
       </ul>
     </nav>
-  );
-};
+  )
+}
