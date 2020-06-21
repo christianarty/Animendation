@@ -1,10 +1,11 @@
 .container {
-  height: 100vh;
+  min-height: 100%;
   background: linear-gradient(
     180deg,
     rgba(106, 130, 251, 0.46) 0%,
     rgba(252, 92, 125, 0.62) 100%
   );
+  overflow:auto;
 }
 
 .grid {
