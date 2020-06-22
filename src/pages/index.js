@@ -1,5 +1,9 @@
-import { useQuery } from '@apollo/react-hooks'
-import { GET_GENRES, GET_RANDOM_ANIME } from 'api/queries'
+import { useQuery, useLazyQuery } from '@apollo/react-hooks'
+import {
+  GET_GENRES,
+  GET_RANDOM_ANIME,
+  GET_RANDOM_ANIME_WITH_GENRE,
+} from 'api/queries'
 import { Button } from 'components/button'
 import { Card } from 'components/card'
 import { CardGroup } from 'components/card-group'
@@ -15,12 +19,31 @@ let lastPage = 260
 const page = randomize(lastPage)
 const randomAnimeNumbers = shuffle().slice(0, 3)
 
+const initialState = {
+  selectedGenres: new Map(),
+}
+
 function Home() {
-  const [selectedGenres, setSelectedGenres] = useState([])
+  const [state, setState] = useState(initialState)
 
   const onChange = (e) => {
+    const genre = e.target.value
+    const isChecked = e.target.checked
+    setState((prevState) => ({
+      ...state,
+      selectedGenres: prevState.selectedGenres.set(genre, isChecked),
+    }))
+  }
+
+  const onClick = (e) => {
     e.preventDefault()
-    setSelectedGenres([...selectedGenres, e.target.value])
+    const trueObjects = []
+    for (let [key, value] of state.selectedGenres.entries()) {
+      if (value) {
+        trueObjects.push(key)
+      }
+    }
+    console.log(trueObjects)
   }
 
   const { data, loading } = useQuery(GET_RANDOM_ANIME, {
@@ -63,12 +86,19 @@ function Home() {
                 side="right"
               />
             </CardGroup>
-            <Button size="large">Randomize</Button>
+            <Button onClick={onClick} size="large">
+              Randomize
+            </Button>
 
             {genres && (
               <div className={styles.grid_checkbox}>
                 {genres.map((genre, idx) => (
-                  <Checkbox key={idx} onChange={onChange} genre={genre} />
+                  <Checkbox
+                    key={idx}
+                    checked={state.selectedGenres.get(genre)}
+                    onChange={onChange}
+                    genre={genre}
+                  />
                 ))}
               </div>
             )}
