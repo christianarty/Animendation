@@ -34,7 +34,13 @@ function Home() {
       selectedGenres: prevState.selectedGenres.set(genre, isChecked),
     }))
   }
-
+  const clearAll = (e) => {
+    e.preventDefault()
+    setState((prevState) => ({
+      ...prevState,
+      selectedGenres: new Map(),
+    }))
+  }
   const onClick = (e) => {
     e.preventDefault()
     const trueObjects = []
@@ -66,6 +72,7 @@ function Home() {
   }, [data])
   const animeList = data?.Page.media
   const genres = genreData?.GenreCollection
+  console.log(state)
   return (
     <div className={styles.container}>
       {loading ? (
@@ -91,16 +98,22 @@ function Home() {
             </Button>
 
             {genres && (
-              <div className={styles.grid_checkbox}>
-                {genres.map((genre, idx) => (
-                  <Checkbox
-                    key={idx}
-                    checked={state.selectedGenres.get(genre)}
-                    onChange={onChange}
-                    genre={genre}
-                  />
-                ))}
-              </div>
+              <>
+                <div className={styles.grid_checkbox}>
+                  {genres.map((genre, idx) => (
+                    <Checkbox
+                      key={idx}
+                      checked={state.selectedGenres.get(genre)}
+                      onChange={onChange}
+                      genre={genre}
+                    />
+                  ))}
+                </div>
+                <Button onClick={(e) => clearAll(e)} size="medium">
+                  {' '}
+                  Clear All
+                </Button>
+              </>
             )}
           </div>
         </>
