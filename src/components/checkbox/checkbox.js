@@ -1,6 +1,6 @@
 import React from 'react'
 import PropTypes from 'prop-types'
-
+import styles from './checkbox.module.css'
 export const Checkbox = ({ genre, checked = false, onChange, ...props }) => {
   return (
     <label>
@@ -10,9 +10,10 @@ export const Checkbox = ({ genre, checked = false, onChange, ...props }) => {
         checked={checked}
         onChange={onChange}
         value={genre}
+        hidden
         {...props}
       />{' '}
-      {genre}
+      <div className={styles.checkbox}>{genre}</div>
     </label>
   )
 }
