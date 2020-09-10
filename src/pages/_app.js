@@ -1,6 +1,7 @@
 import React from 'react'
 import PropTypes from 'prop-types'
-import { createClient, Provider } from 'urql'
+import { createClient, Provider, defaultExchanges } from 'urql'
+import { devtoolsExchange } from '@urql/devtools'
 import 'normalize.css'
 import 'styles/global.css'
 
@@ -11,6 +12,7 @@ import 'styles/global.css'
 
 const client = createClient({
   url: 'https://graphql.anilist.co',
+  exchanges: [devtoolsExchange, ...defaultExchanges],
 })
 
 function App({ Component, pageProps }) {

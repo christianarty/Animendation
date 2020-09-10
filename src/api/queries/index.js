@@ -1,5 +1,22 @@
 import gql from 'graphql-tag'
 
+export const GET_INITIAL_PAGEINFO = gql`
+  query GET_INITIAL_PAGEINFO($initialPage: Int!, $isAdult: Boolean = false) {
+    Page(perPage: 50, page: $initialPage) {
+      media(type: ANIME, isAdult: $isAdult) {
+        id
+      }
+      pageInfo {
+        total
+        perPage
+        currentPage
+        lastPage
+        hasNextPage
+      }
+    }
+  }
+`
+
 export const GET_RANDOM_ANIME_WITH_GENRE = gql`
   query GET_RANDOM_ANIME_WITH_GENRE(
     $page: Int!

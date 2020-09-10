@@ -2,6 +2,7 @@ import {
   GET_GENRES,
   GET_RANDOM_ANIME,
   GET_RANDOM_ANIME_WITH_GENRE,
+  GET_INITIAL_PAGEINFO,
 } from 'api/queries'
 import { Button } from 'components/button'
 import { Card } from 'components/card'
@@ -9,32 +10,82 @@ import { CardGroup } from 'components/card-group'
 import { Checkbox } from 'components/checkbox'
 import { Navigation } from 'components/navigation'
 import React, { useEffect, useReducer } from 'react'
-import { addGenre, animeReducer, clearGenres, removeGenre } from 'state/AnimeReducer'
+import {
+  addGenre,
+  animeReducer,
+  clearGenres,
+  removeGenre,
+  setPage,
+  setLoading,
+  initialPageInfoRequest,
+  initialPageInfoSuccess,
+  initialPageInfoError,
+} from 'state/AnimeReducer'
 import styles from 'styles/home.module.css'
-import { useQuery } from 'urql'
+import { useQuery, useClient } from 'urql'
 import { isDevelopment, isProduction } from 'utils/environment'
 import * as LocalStorage from 'utils/localStorage'
-import shuffle from 'utils/shuffle'
+import { shuffle, randomize } from 'utils/random'
 import logger from 'utils/UseReducerLogger'
+import uniqueId from 'lodash/uniqueId'
 
-function randomize(endingNumber) {
-  return Math.floor(Math.random() * endingNumber) + 1
-}
-
-let lastPage = 260
-const page = randomize(lastPage)
+// let lastPage = 260
+// const page = randomize(lastPage)
 const randomAnimeNumbers = shuffle().slice(0, 3)
 
 const initialState = {
   selectedGenres: new Map(),
-  executeAnimeQuery: false,
+  initialPage: 1,
+  lastPage: null,
+  initialLoad: false,
+  error: null,
+  page: null,
 }
 
+// for getting the page scenario, on mount and whenever selectedGenres change, we want to get the pageInfo only.
+
 function Home() {
-  const [state, dispatch] = useReducer(
-    isDevelopment ? logger(animeReducer) : animeReducer,
-    initialState,
-  )
+  const [state, dispatch] = useReducer(logger(animeReducer), initialState)
+
+  const client = useClient()
+  useEffect(() => {
+    dispatch(initialPageInfoRequest())
+    client
+      .query(GET_INITIAL_PAGEINFO, { initialPage: state.initialPage })
+      .toPromise()
+      .then((result) => dispatch(initialPageInfoSuccess(result)))
+      .catch((error) => dispatch(initialPageInfoError(error)))
+  }, [])
+
+  const [animeResult, reExecuteAnimeQuery] = useQuery({
+    query: GET_RANDOM_ANIME,
+    variables: { page: state.page },
+    pause: state.page === null,
+    fetchPolicy: isProduction ? 'network-only' : 'cache-and-network',
+  })
+  const [selectedAnimeResult, executeSelectedAnimeQuery] = useQuery({
+    query: GET_RANDOM_ANIME_WITH_GENRE,
+    variables: {
+      page: state.initialPage,
+      genreList: Array.from(state.selectedGenres.keys()),
+    },
+    pause: true,
+    fetchPolicy: isProduction ? 'network-only' : 'cache-and-network',
+  })
+  const [genreResult, reExecuteGenreQuery] = useQuery({
+    query: GET_GENRES,
+    fetchPolicy: isProduction ? 'network-only' : 'cache-and-network',
+  })
+
+  const { data: animeData, fetching: animeFetching, error: animeError } = animeResult
+  const { data: genreData, fetching: genreFetching, error: genreError } = genreResult
+
+  // useEffect(() => {
+  //   LocalStorage.setItem('last_page', animeData?.Page?.pageInfo?.lastPage)
+  //   if (!LocalStorage.getItem('last_page') === lastPage) {
+  //     lastPage = LocalStorage.getItem('last_page')
+  //   }
+  // }, [animeData])
 
   function handleOnChange(e) {
     const genre = e.target.value
@@ -47,46 +98,14 @@ function Home() {
   }
   function handleOnClick(e) {
     e.preventDefault()
-    const trueObjects = []
-    for (let [key, value] of state.selectedGenres.entries()) {
-      if (value) {
-        trueObjects.push(key)
-      }
-    }
     executeSelectedAnimeQuery()
   }
-  const listOfGenres = Array.from(state.selectedGenres.keys())
-  const [animeResult, reExecuteAnimeQuery] = useQuery({
-    query: GET_RANDOM_ANIME,
-    variables: { page },
-    fetchPolicy: isProduction ? 'network-only' : 'cache-and-network',
-  })
-  const [selectedAnimeResult, executeSelectedAnimeQuery] = useQuery({
-    query: GET_RANDOM_ANIME_WITH_GENRE,
-    variables: { page, genreList: listOfGenres },
-    pause: true,
-    fetchPolicy: isProduction ? 'network-only' : 'cache-and-network',
-  })
-  const [genreResult, reExecuteGenreQuery] = useQuery({
-    query: GET_GENRES,
-    fetchPolicy: isProduction ? 'network-only' : 'cache-and-network',
-  })
-
-  const { data: animeData, fetching: animeFetching, error: animeError } = animeResult
-  const { data: genreData, fetching: genreFetching, error: genreError } = genreResult
-
-  useEffect(() => {
-    LocalStorage.setItem('last_page', animeData?.Page?.pageInfo?.lastPage)
-    if (!LocalStorage.getItem('last_page') === lastPage) {
-      lastPage = LocalStorage.getItem('last_page')
-    }
-  }, [animeData])
 
   const animeList = animeData?.Page.media
   const genres = genreData?.GenreCollection
   return (
     <div className={styles.container}>
-      {animeFetching || genreFetching ? (
+      {animeFetching || genreFetching || state.initialLoad ? (
         // TODO: Give an actual loading indicator
         <div>loading...</div>
       ) : (
@@ -96,12 +115,21 @@ function Home() {
           <div className={styles.grid}>
             <CardGroup>
               <Card
-                image={animeList[randomAnimeNumbers[0]].coverImage.large}
+                image={
+                  animeList && animeList[randomAnimeNumbers[0]]?.coverImage?.large
+                }
                 side="left"
               />
-              <Card image={animeList[randomAnimeNumbers[1]].coverImage.large} main />
               <Card
-                image={animeList[randomAnimeNumbers[2]].coverImage.large}
+                image={
+                  animeList && animeList[randomAnimeNumbers[1]]?.coverImage?.large
+                }
+                main
+              />
+              <Card
+                image={
+                  animeList && animeList[randomAnimeNumbers[2]]?.coverImage?.large
+                }
                 side="right"
               />
             </CardGroup>
@@ -112,9 +140,9 @@ function Home() {
             {genres && (
               <React.Fragment>
                 <div className={styles.grid_checkbox}>
-                  {genres.map((genre, idx) => (
+                  {genres.map((genre) => (
                     <Checkbox
-                      key={idx}
+                      key={uniqueId('checkbox')}
                       checked={state.selectedGenres.get(genre)}
                       onChange={handleOnChange}
                       genre={genre}

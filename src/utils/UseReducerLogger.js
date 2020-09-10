@@ -1,5 +1,8 @@
 import React from 'react'
-
+/**
+ * Inspired by use-reducer-logger https://github.com/jefflombard/use-reducer-logger  - This gives a redux logger like interface for useReducer
+ * @param {Function} reducer - The reducer you are using in useReducer. Doesn't modify the reducer at all
+ */
 function Logger(reducer) {
   const reducerWithLogger = React.useCallback(
     (state, action) => {

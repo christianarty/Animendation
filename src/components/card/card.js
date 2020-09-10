@@ -3,7 +3,7 @@ import styles from './card.module.css'
 import PropTypes from 'prop-types'
 import clsx from 'clsx'
 
-export const Card = ({ image, main, side }) => {
+export const Card = ({ image = '', main, side }) => {
   return (
     <section className={clsx(styles.card, {})}>
       <img
@@ -20,7 +20,7 @@ export const Card = ({ image, main, side }) => {
 }
 
 Card.propTypes = {
-  image: PropTypes.string.isRequired,
+  image: PropTypes.string,
   main: PropTypes.bool,
   side: PropTypes.oneOf(['left', 'right']),
 }
