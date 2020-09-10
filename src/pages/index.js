@@ -1,4 +1,3 @@
-import { useQuery, useLazyQuery } from '@apollo/react-hooks'
 import {
   GET_GENRES,
   GET_RANDOM_ANIME,
@@ -9,11 +8,18 @@ import { Card } from 'components/card'
 import { CardGroup } from 'components/card-group'
 import { Checkbox } from 'components/checkbox'
 import { Navigation } from 'components/navigation'
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useReducer } from 'react'
+import { addGenre, animeReducer, clearGenres, removeGenre } from 'state/AnimeReducer'
+import styles from 'styles/home.module.css'
+import { useQuery } from 'urql'
+import { isDevelopment, isProduction } from 'utils/environment'
+import * as LocalStorage from 'utils/localStorage'
 import shuffle from 'utils/shuffle'
-import styles from '../styles/home.module.css'
+import logger from 'utils/UseReducerLogger'
 
-const randomize = (endingNumber) => Math.floor(Math.random() * endingNumber) + 1
+function randomize(endingNumber) {
+  return Math.floor(Math.random() * endingNumber) + 1
+}
 
 let lastPage = 260
 const page = randomize(lastPage)
@@ -21,27 +27,25 @@ const randomAnimeNumbers = shuffle().slice(0, 3)
 
 const initialState = {
   selectedGenres: new Map(),
+  executeAnimeQuery: false,
 }
 
 function Home() {
-  const [state, setState] = useState(initialState)
+  const [state, dispatch] = useReducer(
+    isDevelopment ? logger(animeReducer) : animeReducer,
+    initialState,
+  )
 
-  const onChange = (e) => {
+  function handleOnChange(e) {
     const genre = e.target.value
     const isChecked = e.target.checked
-    setState((prevState) => ({
-      ...state,
-      selectedGenres: prevState.selectedGenres.set(genre, isChecked),
-    }))
+    isChecked ? dispatch(addGenre({ genre })) : dispatch(removeGenre({ genre }))
   }
-  const clearAll = (e) => {
+  function handleClearAll(e) {
     e.preventDefault()
-    setState((prevState) => ({
-      ...prevState,
-      selectedGenres: new Map(),
-    }))
+    dispatch(clearGenres())
   }
-  const onClick = (e) => {
+  function handleOnClick(e) {
     e.preventDefault()
     const trueObjects = []
     for (let [key, value] of state.selectedGenres.entries()) {
@@ -49,36 +53,44 @@ function Home() {
         trueObjects.push(key)
       }
     }
-    console.log(trueObjects)
+    executeSelectedAnimeQuery()
   }
-
-  const { data, loading } = useQuery(GET_RANDOM_ANIME, {
+  const listOfGenres = Array.from(state.selectedGenres.keys())
+  const [animeResult, reExecuteAnimeQuery] = useQuery({
+    query: GET_RANDOM_ANIME,
     variables: { page },
-    ssr: true,
-    fetchPolicy:
-      process.env.NODE_ENV === 'production' ? 'network-only' : 'cache-and-network',
+    fetchPolicy: isProduction ? 'network-only' : 'cache-and-network',
   })
-  const { data: genreData } = useQuery(GET_GENRES, {
-    ssr: true,
-    fetchPolicy:
-      process.env.NODE_ENV === 'production' ? 'network-only' : 'cache-and-network',
+  const [selectedAnimeResult, executeSelectedAnimeQuery] = useQuery({
+    query: GET_RANDOM_ANIME_WITH_GENRE,
+    variables: { page, genreList: listOfGenres },
+    pause: true,
+    fetchPolicy: isProduction ? 'network-only' : 'cache-and-network',
   })
+  const [genreResult, reExecuteGenreQuery] = useQuery({
+    query: GET_GENRES,
+    fetchPolicy: isProduction ? 'network-only' : 'cache-and-network',
+  })
+
+  const { data: animeData, fetching: animeFetching, error: animeError } = animeResult
+  const { data: genreData, fetching: genreFetching, error: genreError } = genreResult
 
   useEffect(() => {
-    window.localStorage.setItem('last_page', data?.Page?.pageInfo?.lastPage)
-    if (!window.localStorage.getItem('last_page') === lastPage) {
-      lastPage = window.localStorage.getItem('last_page')
+    LocalStorage.setItem('last_page', animeData?.Page?.pageInfo?.lastPage)
+    if (!LocalStorage.getItem('last_page') === lastPage) {
+      lastPage = LocalStorage.getItem('last_page')
     }
-  }, [data])
-  const animeList = data?.Page.media
+  }, [animeData])
+
+  const animeList = animeData?.Page.media
   const genres = genreData?.GenreCollection
-  console.log(state)
   return (
     <div className={styles.container}>
-      {loading ? (
+      {animeFetching || genreFetching ? (
+        // TODO: Give an actual loading indicator
         <div>loading...</div>
       ) : (
-        <>
+        <React.Fragment>
           {' '}
           <Navigation />
           <div className={styles.grid}>
@@ -93,30 +105,30 @@ function Home() {
                 side="right"
               />
             </CardGroup>
-            <Button onClick={onClick} size="large">
+            <Button onClick={handleOnClick} size="large">
               Randomize
             </Button>
 
             {genres && (
-              <>
+              <React.Fragment>
                 <div className={styles.grid_checkbox}>
                   {genres.map((genre, idx) => (
                     <Checkbox
                       key={idx}
                       checked={state.selectedGenres.get(genre)}
-                      onChange={onChange}
+                      onChange={handleOnChange}
                       genre={genre}
                     />
                   ))}
                 </div>
-                <Button onClick={(e) => clearAll(e)} size="medium">
+                <Button onClick={handleClearAll} size="medium">
                   {' '}
                   Clear All
                 </Button>
-              </>
+              </React.Fragment>
             )}
           </div>
-        </>
+        </React.Fragment>
       )}
     </div>
   )

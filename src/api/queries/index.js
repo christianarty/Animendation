@@ -1,7 +1,7 @@
-import { gql } from 'apollo-boost'
+import gql from 'graphql-tag'
 
 export const GET_RANDOM_ANIME_WITH_GENRE = gql`
-  query GET_RANDOM_ANIME(
+  query GET_RANDOM_ANIME_WITH_GENRE(
     $page: Int!
     $isAdult: Boolean = false
     $genreList: [String]!

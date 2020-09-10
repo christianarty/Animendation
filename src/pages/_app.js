@@ -1,20 +1,23 @@
 import React from 'react'
-import ApolloClient, { InMemoryCache } from 'apollo-boost'
-import { ApolloProvider } from '@apollo/react-hooks'
-import 'normalize.css'
 import PropTypes from 'prop-types'
+import { createClient, Provider } from 'urql'
+import 'normalize.css'
 import 'styles/global.css'
 
-const client = new ApolloClient({
-  uri: 'https://graphql.anilist.co',
-  cache: new InMemoryCache(),
+// const client = new ApolloClient({
+//   uri: 'https://graphql.anilist.co',
+//   cache: new InMemoryCache(),
+// })
+
+const client = createClient({
+  url: 'https://graphql.anilist.co',
 })
 
 function App({ Component, pageProps }) {
   return (
-    <ApolloProvider client={client}>
+    <Provider value={client}>
       <Component {...pageProps} />
-    </ApolloProvider>
+    </Provider>
   )
 }
 
