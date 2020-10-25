@@ -5,7 +5,6 @@ import {
   GET_INITIAL_PAGEINFO,
 } from 'api/queries'
 import { Button } from 'components/button'
-import { Card } from 'components/card'
 import { CardGroup } from 'components/card-group'
 import { Checkbox } from 'components/checkbox'
 import { Navigation } from 'components/navigation'
@@ -45,7 +44,10 @@ const initialState = {
 // for getting the page scenario, on mount and whenever selectedGenres change, we want to get the pageInfo only.
 
 function Home() {
-  const [state, dispatch] = useReducer(logger(animeReducer), initialState)
+  const [state, dispatch] = useReducer(
+    isProduction ? animeReducer : logger(animeReducer),
+    initialState,
+  )
 
   const client = useClient()
   useEffect(() => {
@@ -80,13 +82,6 @@ function Home() {
   const { data: animeData, fetching: animeFetching, error: animeError } = animeResult
   const { data: genreData, fetching: genreFetching, error: genreError } = genreResult
 
-  // useEffect(() => {
-  //   LocalStorage.setItem('last_page', animeData?.Page?.pageInfo?.lastPage)
-  //   if (!LocalStorage.getItem('last_page') === lastPage) {
-  //     lastPage = LocalStorage.getItem('last_page')
-  //   }
-  // }, [animeData])
-
   function handleOnChange(e) {
     const genre = e.target.value
     const isChecked = e.target.checked
@@ -97,7 +92,8 @@ function Home() {
     dispatch(clearGenres())
   }
   function handleOnClick(e) {
-    e.preventDefault()
+    // e.preventDefault()
+    console.log('CLICKED')
     executeSelectedAnimeQuery()
   }
 
@@ -113,26 +109,28 @@ function Home() {
           {' '}
           <Navigation />
           <div className={styles.grid}>
-            <CardGroup>
-              <Card
-                image={
-                  animeList && animeList[randomAnimeNumbers[0]]?.coverImage?.large
-                }
-                side="left"
-              />
-              <Card
-                image={
-                  animeList && animeList[randomAnimeNumbers[1]]?.coverImage?.large
-                }
-                main
-              />
-              <Card
-                image={
-                  animeList && animeList[randomAnimeNumbers[2]]?.coverImage?.large
-                }
-                side="right"
-              />
-            </CardGroup>
+            <CardGroup
+              cards={[
+                {
+                  id: 1,
+                  image:
+                    animeList && animeList[randomAnimeNumbers[0]]?.coverImage?.large,
+                  side: 'left',
+                },
+                {
+                  id: 2,
+                  image:
+                    animeList && animeList[randomAnimeNumbers[1]]?.coverImage?.large,
+                  side: 'center',
+                },
+                {
+                  id: 3,
+                  image:
+                    animeList && animeList[randomAnimeNumbers[2]]?.coverImage?.large,
+                  side: 'right',
+                },
+              ]}
+            />
             <Button onClick={handleOnClick} size="large">
               Randomize
             </Button>
