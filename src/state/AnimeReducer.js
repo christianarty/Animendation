@@ -42,7 +42,7 @@ export const initialPageInfoError = createAction(
   ANIME_REDUCER_TYPES.INITIAL_PAGE_INFO_ERROR,
 )
 
-export function animeReducer(state, action) {
+export function animeReducer(state, { type, payload }) {
   const {
     ADD_GENRE,
     REMOVE_GENRE,
@@ -53,14 +53,14 @@ export function animeReducer(state, action) {
     INITIAL_PAGE_INFO_SUCCESS,
     INITIAL_PAGE_INFO_ERROR,
   } = ANIME_REDUCER_TYPES
-  switch (action.type) {
+  switch (type) {
     case ADD_GENRE:
       return {
         ...state,
-        selectedGenres: state.selectedGenres.set(action.payload.genre, true),
+        selectedGenres: state.selectedGenres.set(payload.genre, true),
       }
     case REMOVE_GENRE:
-      state.selectedGenres.delete(action.payload.genre)
+      state.selectedGenres.delete(payload.genre)
       return {
         ...state,
       }
@@ -72,30 +72,30 @@ export function animeReducer(state, action) {
     case SET_PAGE:
       return {
         ...state,
-        lastPage: action.payload.page,
+        lastPage: payload.page,
       }
     case SET_LOADING:
       return {
         ...state,
-        initialLoad: action.payload.loading,
+        fetchStatus: payload.status,
       }
     case INITIAL_PAGE_INFO_REQUEST:
       return {
         ...state,
-        initialLoad: true,
+        fetchStatus: 'pending',
       }
     case INITIAL_PAGE_INFO_SUCCESS:
       return {
         ...state,
-        initialLoad: false,
-        lastPage: action.payload.data.Page.pageInfo.lastPage,
-        page: randomize(action.payload.data.Page.pageInfo.lastPage),
+        fetchStatus: 'fulfilled',
+        lastPage: payload.data.Page.pageInfo.lastPage,
+        page: randomize(payload.data.Page.pageInfo.lastPage),
       }
     case INITIAL_PAGE_INFO_ERROR:
       return {
         ...state,
-        initialLoad: false,
-        error: action.payload,
+        fetchStatus: 'error',
+        error: payload,
       }
     default:
       return state

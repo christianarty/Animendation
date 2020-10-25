@@ -36,7 +36,7 @@ const initialState = {
   selectedGenres: new Map(),
   initialPage: 1,
   lastPage: null,
-  initialLoad: false,
+  fetchStatus: 'idle',
   error: null,
   page: null,
 }
@@ -99,9 +99,10 @@ function Home() {
 
   const animeList = animeData?.Page.media
   const genres = genreData?.GenreCollection
+  console.log('selectedAnimeResult', selectedAnimeResult)
   return (
     <div className={styles.container}>
-      {animeFetching || genreFetching || state.initialLoad ? (
+      {animeFetching || genreFetching || state.fetchStatus === 'pending' ? (
         // TODO: Give an actual loading indicator
         <div>loading...</div>
       ) : (
