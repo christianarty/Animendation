@@ -1,5 +1,5 @@
 {
-  "name": "with-typescript",
+  "name": "animendation",
   "version": "1.0.0",
   "scripts": {
     "dev": "next",
@@ -8,9 +8,18 @@
     "type-check": "tsc"
   },
   "dependencies": {
+    "@chakra-ui/icons": "^1.0.4",
+    "@chakra-ui/react": "^1.2.1",
+    "@emotion/react": "^11.1.4",
+    "@emotion/styled": "^11.0.0",
+    "framer-motion": "^3.3.0",
+    "graphql": "^15.5.0",
+    "graphql-request": "^3.4.0",
     "next": "latest",
     "react": "^16.12.0",
-    "react-dom": "^16.12.0"
+    "react-dom": "^16.12.0",
+    "react-query": "^3.7.1",
+    "swr": "^0.4.1"
   },
   "devDependencies": {
     "@types/node": "^12.12.21",

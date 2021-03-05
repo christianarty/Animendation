@@ -5,6 +5,23 @@
 // import { User } from 'path/to/interfaces';
 
 export type User = {
-  id: number
-  name: string
-}
+  id: number;
+  name: string;
+};
+
+export type AniListResponse = {
+  Page: AniListPage;
+};
+
+type AniListPage = {
+  media: {
+    id: number;
+  }[];
+  pageInfo: {
+    total: number;
+    perPage: number;
+    currentPage: number;
+    lastPage: number;
+    hasNextPage: boolean;
+  };
+};
